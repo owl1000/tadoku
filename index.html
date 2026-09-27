@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>英語多読</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="英語多読">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#F4F6F7">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<style>
+:root{
+  --bg:#F4F6F7;--paper:#FFFFFF;--ink:#2B3137;--pencil:#66707A;--faint:#98A1A9;--rule:#DDE2E6;
+  --blue:#3F6689;--blue-soft:#E7EEF4;--blue-line:#86A3BE;--rose:#9E5F6B;--rose-soft:#F4E9EB;
+  --sage:#58806A;--sage-soft:#E6EFE9;--speak:#EEF3F7;--on-blue:#FFFFFF;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#1C2024;--paper:#23282D;--ink:#E3E6E8;--pencil:#A7AFB6;--faint:#7B848C;--rule:#363C42;
+    --blue:#9DB8D2;--blue-soft:#2A3440;--blue-line:#6F8FAE;--rose:#D3A2AB;--rose-soft:#3A2D31;
+    --sage:#9EC2AC;--sage-soft:#2A3530;--speak:#29323B;--on-blue:#1C2024;
+  }
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN",sans-serif;-webkit-text-size-adjust:100%;background:var(--bg);color:var(--ink)}
+body{margin:0;padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+body.reading{padding-bottom:0}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.btn{border:1px solid var(--rule);background:var(--paper);border-radius:8px;padding:8px 14px;font-size:15px;min-height:40px}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:var(--on-blue)}
+.btn.quiet{background:transparent}
+.btn.danger{color:var(--rose);border-color:var(--rose);background:transparent}
+.view{max-width:880px;margin:0 auto;padding:calc(16px + env(safe-area-inset-top)) 20px 32px}
+.vh{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 20px}
+.vh h1{font-size:26px;font-weight:600;margin:0;letter-spacing:.02em}
+.acts{display:flex;gap:8px}
+#tabs{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;justify-content:center;gap:4px;background:var(--paper);border-top:1px solid var(--rule);padding:6px 12px calc(6px + env(safe-area-inset-bottom))}
+#tabs button{flex:0 1 160px;border:0;background:none;padding:10px 8px;border-radius:8px;font-size:15px;color:var(--pencil)}
+#tabs button[aria-current="page"]{color:var(--blue);background:var(--blue-soft);font-weight:600}
+
+.book{margin-bottom:32px}
+.book-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;border-bottom:2px solid var(--ink);padding-bottom:6px}
+.book-h h2{font-size:20px;margin:0;font-weight:600}
+.book-m{font-size:13px;color:var(--pencil)}
+.parts{list-style:none;margin:0;padding:0}
+.parts li{display:flex;align-items:center;border-bottom:1px solid var(--rule)}
+.part{flex:1;display:grid;grid-template-columns:60px minmax(0,1fr) auto auto;gap:14px;align-items:center;text-align:left;background:none;border:0;padding:14px 4px;font-size:16px}
+.pn{font-variant-numeric:tabular-nums;color:var(--blue);font-weight:600}
+.pc{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pw{font-size:13px;color:var(--pencil);font-variant-numeric:tabular-nums}
+.st{font-size:12px;padding:3px 8px;border-radius:999px;color:var(--pencil);background:var(--bg);min-width:88px;text-align:center}
+.st.done{color:var(--sage);background:var(--sage-soft)}
+.st.mid{color:var(--blue);background:var(--blue-soft)}
+.del{display:none;margin-left:8px;border:1px solid var(--rose);color:var(--rose);background:none;border-radius:8px;padding:6px 10px;font-size:13px}
+.managing .del{display:inline-block}
+.empty{padding:48px 24px;text-align:center;border:1px dashed var(--rule);border-radius:12px;background:var(--paper)}
+.empty-t{font-size:17px;margin:0 0 8px}
+.empty-s{font-size:14px;color:var(--pencil);margin:0 0 20px;line-height:1.7}
+
+#v-reader{--en-size:19px;min-height:100vh;background:var(--paper)}
+.rbar{position:sticky;top:0;z-index:5;background:var(--paper);border-bottom:1px solid var(--rule);padding:calc(8px + env(safe-area-inset-top)) 16px 8px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.r-title{flex:1;min-width:180px;line-height:1.35}
+.r-title b{display:block;font-size:16px;font-weight:600}
+.r-title span{font-size:12px;color:var(--pencil)}
+.ctl{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ctl select{font-size:16px;border:1px solid var(--rule);border-radius:8px;background:var(--paper);padding:6px 8px;min-height:40px}
+.ctl .btn{display:inline-flex;align-items:center;gap:6px}
+.ctl .btn svg{width:14px;height:14px}
+.back{border:0;background:none;padding:8px 6px;display:inline-flex;align-items:center;gap:4px;color:var(--blue);font-size:15px}
+.back svg{width:18px;height:18px}
+.colhead,.row{display:grid;grid-template-columns:minmax(0,48fr) minmax(0,22fr) minmax(0,30fr)}
+.colhead{font-size:12px;color:var(--faint);border-bottom:1px solid var(--rule)}
+.colhead span{padding:6px 16px}
+.colhead span:first-child{padding-left:44px}
+.para{border-bottom:1px solid var(--rule);padding-bottom:10px;margin-bottom:10px}
+.row+.row{border-top:1px dashed var(--rule)}
+.row>div{padding:12px 16px}
+.c-gl,.c-ja{border-left:1px solid var(--rule)}
+.c-en{position:relative;padding-left:44px!important}
+.say{position:absolute;left:8px;top:15px;width:28px;height:28px;border-radius:50%;border:1px solid var(--rule);background:var(--paper);color:var(--pencil);display:grid;place-items:center;padding:0}
+.say svg{width:11px;height:11px}
+.en{margin:0;font-size:var(--en-size);line-height:1.85}
+.en span[data-keys]{cursor:pointer}
+.mu{border-bottom:2px solid var(--blue-line);padding-bottom:1px}
+.mg{text-decoration:underline dashed var(--rose);text-decoration-thickness:1.5px;text-underline-offset:6px}
+.nsup{font-size:.58em;color:var(--rose);cursor:pointer;padding:0 2px}
+.gns{margin-top:6px}
+.gn{font-size:13px;color:var(--rose);line-height:1.6;display:flex;flex-wrap:wrap;gap:0 8px;align-items:baseline;border-radius:4px}
+.gnp{font-weight:600}
+.gi{margin-bottom:10px;font-size:14px;line-height:1.55;border-radius:4px}
+.gi:last-child{margin-bottom:0}
+.gp{display:block;background:none;border:0;padding:0;text-align:left;color:var(--blue);font-weight:600;font-size:14px}
+.nref{border:0;background:none;color:var(--rose);font-size:13px;padding:0 4px}
+.ja-t{margin:0;font-size:14px;line-height:1.8;color:var(--pencil);cursor:pointer}
+.ja-inline{display:none}
+.jabtn{display:none;border:1px dashed var(--rule);background:none;color:var(--faint);font-size:12px;border-radius:6px;padding:4px 8px}
+.hide-ja .row:not(.reveal) .jabtn{display:inline-block}
+.hide-ja .row:not(.reveal) .ja-t{display:none}
+.speaking{background:var(--speak)}
+.speaking .say{border-color:var(--blue);color:var(--blue)}
+.flash{animation:fl 1.6s ease-out}
+@keyframes fl{0%,40%{background:var(--blue-soft)}100%{background:transparent}}
+@media (prefers-reduced-motion: reduce){.flash{animation:none;background:var(--blue-soft)}}
+@media (orientation:portrait),(max-width:960px){
+  .colhead,.row{grid-template-columns:minmax(0,64fr) minmax(0,36fr)}
+  .c-ja,.colhead .h-ja{display:none}
+  .ja-inline{display:block;margin-top:8px}
+}
+.rsec{padding:28px 20px 8px;max-width:880px;margin:0 auto}
+.sec-t{font-size:18px;font-weight:600;margin:0 0 4px;padding-bottom:6px;border-bottom:2px solid var(--ink)}
+.note{padding:14px 0;border-bottom:1px solid var(--rule);border-radius:4px}
+.note h3{font-size:16px;font-weight:600;margin:0 0 6px;display:flex;gap:8px;align-items:baseline}
+.nm{color:var(--rose)}
+.note p{margin:4px 0;font-size:15px;line-height:1.75}
+.ex,.keep{list-style:none;padding:0;margin:8px 0 0}
+.ex li,.keep li{display:flex;gap:12px;align-items:flex-start;padding:6px 0}
+.ex .say,.keep .say{position:static;flex:none}
+.ex-en{margin:0;font-size:16px;line-height:1.6}
+.ex-ja{margin:0;font-size:13px;color:var(--pencil)}
+.keep li{border-bottom:1px solid var(--rule);padding:10px 0;align-items:center}
+.keep .k-en{font-weight:600;min-width:40%}
+.keep .k-ja{color:var(--pencil);font-size:15px}
+.finish{text-align:center;padding:32px 20px calc(48px + env(safe-area-inset-bottom))}
+.finish .btn{min-width:240px;min-height:50px;font-size:17px}
+.finish p{font-size:13px;color:var(--pencil);margin:10px 0 0}
+
+.goals{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:20px}
+.goal{background:var(--paper);border:1px solid var(--rule);border-radius:12px;padding:16px 18px}
+.goal-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.goal-l{font-size:14px;color:var(--pencil)}
+.goal-v{font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
+.goal-v small{font-size:13px;color:var(--pencil);font-weight:400}
+.bar{height:10px;border-radius:5px;background:var(--bg);margin:12px 0 8px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--sage);border-radius:5px}
+.goal-s{margin:0;font-size:13px;color:var(--pencil)}
+.stats{display:flex;gap:32px;flex-wrap:wrap;padding:4px 2px 24px}
+.stat b{display:block;font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--pencil)}
+.h2{font-size:18px;font-weight:600;margin:8px 0 0;padding-bottom:6px;border-bottom:2px solid var(--ink)}
+table.months{width:100%;border-collapse:collapse;font-size:15px;margin-bottom:32px}
+.months th{text-align:left;font-weight:400;color:var(--pencil);font-size:12px;border-bottom:1px solid var(--rule);padding:8px}
+.months td{padding:10px 8px;border-bottom:1px solid var(--rule);font-variant-numeric:tabular-nums}
+.ok{color:var(--sage);font-size:13px}
+.recs{list-style:none;margin:0;padding:0}
+.recs li{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:12px;align-items:start;padding:14px 2px;border-bottom:1px solid var(--rule)}
+.r-date{font-size:14px;color:var(--pencil);font-variant-numeric:tabular-nums;padding-top:2px}
+.r-main b{font-weight:600}
+.r-meta{font-size:13px;color:var(--pencil);margin-top:2px}
+.r-cmt{font-size:14px;margin:6px 0 0;line-height:1.7;white-space:pre-wrap}
+.recs .btn{min-height:34px;padding:4px 12px;font-size:13px}
+.muted{color:var(--pencil);font-size:14px}
+
+.set-sec{background:var(--paper);border:1px solid var(--rule);border-radius:12px;padding:18px 20px;margin-bottom:16px}
+.set-sec h2{font-size:17px;font-weight:600;margin:0 0 12px}
+.set-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.set-row select{flex:1;min-width:220px;font-size:16px;border:1px solid var(--rule);border-radius:8px;background:var(--bg);padding:8px 10px;min-height:42px}
+.set-note{font-size:13px;color:var(--pencil);line-height:1.7;margin:4px 0 0}
+
+dialog{border:0;border-radius:14px;padding:0;width:min(440px,92vw);background:var(--paper);color:var(--ink)}
+dialog::backdrop{background:rgba(20,26,32,.4)}
+.dlg{padding:20px 22px}
+.dlg h2{font-size:18px;font-weight:600;margin:0 0 4px}
+.dlg .sub{font-size:13px;color:var(--pencil);margin:0 0 16px}
+.field{display:block;margin-bottom:14px}
+.field span{display:block;font-size:13px;color:var(--pencil);margin-bottom:4px}
+.field input,.field textarea{width:100%;border:1px solid var(--rule);border-radius:8px;padding:10px;background:var(--bg);font-size:16px}
+.field textarea{min-height:90px;resize:vertical}
+.field small{display:block;font-size:12px;color:var(--faint);margin-top:4px}
+.err{color:var(--rose);font-size:13px;margin:-6px 0 10px}
+.dlg-a{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+.dlg-a .left{margin-right:auto}
+#toast{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:8px;font-size:14px;z-index:50;max-width:90vw;opacity:0;pointer-events:none;transition:opacity .2s}
+#toast.on{opacity:1}
+</style>
+</head>
+<body>
+
+<main id="v-shelf" class="view">
+  <header class="vh">
+    <h1>本棚</h1>
+    <div class="acts">
+      <button class="btn quiet" id="btn-manage" type="button">整理</button>
+      <button class="btn primary" data-act="import" type="button">教材を読み込む</button>
+    </div>
+  </header>
+  <div id="shelf-list"></div>
+</main>
+
+<main id="v-log" class="view" hidden>
+  <header class="vh">
+    <h1>記録</h1>
+    <button class="btn" id="btn-goal" type="button">目標を変更</button>
+  </header>
+  <div id="log-body"></div>
+</main>
+
+<main id="v-settings" class="view" hidden>
+  <header class="vh"><h1>設定</h1></header>
+  <section class="set-sec">
+    <h2>読み上げの声</h2>
+    <div class="set-row">
+      <select id="set-voice" aria-label="読み上げの声"></select>
+      <button class="btn" id="btn-voice-test" type="button">試しに聞く</button>
+    </div>
+    <p class="set-note">英語の声が少ないときや機械的に聞こえるときは、iPadの「設定」→「アクセシビリティ」→「読み上げコンテンツ」→「声」→「英語」で、高音質の声をダウンロードしてください。アプリを開き直すと一覧に出ます。</p>
+  </section>
+  <section class="set-sec">
+    <h2>データの控え</h2>
+    <div class="set-row">
+      <button class="btn" id="btn-export" type="button">控えを書き出す</button>
+      <button class="btn" id="btn-restore" type="button">控えから戻す</button>
+    </div>
+    <p class="set-note">教材・読書記録・目標は、このiPadの中にだけ保存されています。アプリを削除すると消えるため、ときどき控えを書き出して「ファイル」アプリに保存してください。</p>
+  </section>
+  <section class="set-sec">
+    <h2>このアプリについて</h2>
+    <p class="set-note">英語多読 バージョン 1.0<br>通信は最初の読み込み時だけで、以降はオフラインで動きます。</p>
+  </section>
+</main>
+
+<section id="v-reader" hidden>
+  <div class="rbar">
+    <button class="back" id="btn-back" type="button"></button>
+    <div class="r-title"><b id="r-title"></b><span id="r-chapter"></span></div>
+    <div class="ctl">
+      <button class="btn" id="btn-playall" type="button"></button>
+      <select id="sel-rate" aria-label="読み上げの速さ"></select>
+      <button class="btn" id="btn-ja" type="button"></button>
+      <button class="btn" id="btn-fs-down" type="button" aria-label="文字を小さく">A−</button>
+      <button class="btn" id="btn-fs-up" type="button" aria-label="文字を大きく">A＋</button>
+    </div>
+  </div>
+  <div class="colhead"><span>英文</span><span>語注</span><span class="h-ja">和訳</span></div>
+  <div id="r-rows"></div>
+  <section class="rsec" id="r-notes"></section>
+  <section class="rsec" id="r-keep"></section>
+  <div class="finish">
+    <button class="btn primary" id="btn-finish" type="button">読了</button>
+    <p id="r-timer"></p>
+  </div>
+</section>
+
+<nav id="tabs" aria-label="画面の切り替え">
+  <button type="button" data-view="shelf" aria-current="page">本棚</button>
+  <button type="button" data-view="log">記録</button>
+  <button type="button" data-view="settings">設定</button>
+</nav>
+
+<input type="file" id="f-material" multiple hidden>
+<input type="file" id="f-backup" hidden>
+
+<dialog id="dlg-rec">
+  <div class="dlg">
+    <h2 id="rec-h">読了の記録</h2>
+    <p class="sub" id="rec-sub"></p>
+    <label class="field"><span>読了日</span><input type="date" id="rec-date"></label>
+    <label class="field"><span>読んだ時間（分）</span><input type="number" id="rec-min" min="1" step="1" inputmode="numeric"><small id="rec-min-note"></small></label>
+    <p class="err" id="rec-err" hidden></p>
+    <label class="field"><span>感想（任意）</span><textarea id="rec-cmt"></textarea></label>
+    <div class="dlg-a">
+      <button class="btn danger left" id="rec-del" type="button">記録を削除</button>
+      <button class="btn quiet" id="rec-cancel" type="button">やめる</button>
+      <button class="btn primary" id="rec-save" type="button">記録する</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="dlg-goal">
+  <div class="dlg">
+    <h2>目標を変更</h2>
+    <p class="sub">語数で入れてください。0にすると目標なしになります。</p>
+    <label class="field"><span>累計の目標（語）</span><input type="number" id="goal-total" min="0" step="1000" inputmode="numeric"></label>
+    <label class="field"><span id="goal-month-l">今月の目標（語）</span><input type="number" id="goal-month" min="0" step="500" inputmode="numeric"><small>翌月以降も、変更するまでこの目標が続きます。</small></label>
+    <p class="err" id="goal-err" hidden></p>
+    <div class="dlg-a">
+      <button class="btn quiet" id="goal-cancel" type="button">やめる</button>
+      <button class="btn primary" id="goal-save" type="button">保存する</button>
+    </div>
+  </div>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+const $=s=>document.querySelector(s);
+const $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
+const fmtNum=n=>Math.round(n).toLocaleString('ja-JP');
+const fmtMin=sec=>{const m=Math.max(0,Math.round(sec/60));if(m<60)return m+'分';return Math.floor(m/60)+'時間'+(m%60?(m%60)+'分':'')};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const ICON={
+  play:'<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1.5v9l7.5-4.5z" fill="currentColor"/></svg>',
+  stop:'<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="2" width="8" height="8" rx="1" fill="currentColor"/></svg>',
+  back:'<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M12.5 4l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+};
+
+/*PARSER-START*/
+function countWords(s){return (String(s).match(/[A-Za-z0-9]+(?:['’\-][A-Za-z0-9]+)*/g)||[]).length}
+
+function parseMaterial(raw,fileName){
+  let text=String(raw).replace(/^\uFEFF/,'').replace(/\r\n?/g,'\n').replace(/<!--[\s\S]*?-->/g,'');
+  const meta={};
+  const fm=text.match(/^---\n([\s\S]*?)\n---[ \t]*(\n|$)/);
+  if(fm){
+    fm[1].split('\n').forEach(l=>{const m=l.match(/^([^:\s-][^:]*):\s*(.*)$/);if(m)meta[m[1].trim()]=m[2].trim().replace(/^["']|["']$/g,'')});
+    text=text.slice(fm[0].length);
+  }
+  const book=meta['書名']||String(fileName||'').replace(/\.(md|markdown|txt)$/i,'').replace(/^教材_/,'')||'無題';
+  const number=meta['番号']||'';
+  const chapter=meta['章']||'';
+  const paragraphs=[],notes=[],keep=[];
+  let section='',para=null,sent=null,note=null;
+  for(const rawLine of text.split('\n')){
+    const line=rawLine.trim();
+    if(!line)continue;
+    let m;
+    if((m=line.match(/^##\s+(.+)$/))&&!/^###/.test(line)){
+      const h=m[1];
+      section=h.includes('本文')?'body':(h.includes('解説')||h.includes('ノート'))?'notes':h.includes('覚え')?'keep':'other';
+      para=null;sent=null;note=null;continue;
+    }
+    if(/^#\s/.test(line))continue;
+    if(section==='body'){
+      if(/^###\s/.test(line)){para={sentences:[]};paragraphs.push(para);sent=null;continue}
+      if((m=line.match(/^\[(\d+)\]\s*(.+)$/))){
+        if(!para){para={sentences:[]};paragraphs.push(para)}
+        sent={n:+m[1],en:m[2].trim(),ja:'',gloss:[],gram:[]};para.sentences.push(sent);continue;
+      }
+      if(!sent)continue;
+      if((m=line.match(/^[=＝]\s*(.*)$/))){sent.ja+=(sent.ja?'\n':'')+m[1];continue}
+      if((m=line.match(/^([-*])\s+(.+)$/))){
+        const p=m[2].split('|').map(s=>s.trim());
+        const item={phrase:p[0]||'',text:p[1]||'',note:p[2]||''};
+        if(item.phrase)(m[1]==='-'?sent.gloss:sent.gram).push(item);
+        continue;
+      }
+    }else if(section==='notes'){
+      if((m=line.match(/^###\s+(.+)$/))){
+        const t=m[1].trim();const nm=t.match(/^([\u2460-\u2473])\s*(.*)$/);
+        note={mark:nm?nm[1]:'',title:nm?nm[2]:t,desc:[],examples:[]};notes.push(note);continue;
+      }
+      if(!note)continue;
+      if((m=line.match(/^説明[:：]\s*(.*)$/))){note.desc.push(m[1]);continue}
+      if((m=line.match(/^例文[:：]\s*(.*)$/))){
+        let en=m[1],ja='';const k=en.indexOf('／');
+        if(k>=0){ja=en.slice(k+1).trim();en=en.slice(0,k).trim()}
+        note.examples.push({en,ja});continue;
+      }
+      note.desc.push(line.replace(/^[-*]\s+/,''));
+    }else if(section==='keep'){
+      if((m=line.match(/^[-*]\s+(.+)$/))){const p=m[1].split('|').map(s=>s.trim());keep.push({en:p[0],ja:p[1]||''})}
+    }
+  }
+  const sentences=paragraphs.reduce((a,p)=>a.concat(p.sentences),[]);
+  const words=sentences.reduce((a,s)=>a+countWords(s.en),0);
+  return {id:book+'|'+number,book,number,chapter,paragraphs,notes,keep,words,sentenceCount:sentences.length};
+}
+
+const IRR={be:['am','is','are','was','were','been','being'],have:['has','had','having'],do:['does','did','done','doing'],go:['goes','went','gone','going'],come:['came'],see:['saw','seen'],grow:['grew','grown'],take:['took','taken'],make:['made'],give:['gave','given'],find:['found'],think:['thought'],tell:['told'],say:['said'],get:['got','gotten'],know:['knew','known'],leave:['left'],feel:['felt'],bring:['brought'],keep:['kept'],stand:['stood'],run:['ran'],begin:['began','begun'],hold:['held'],write:['wrote','written'],speak:['spoke','spoken'],fall:['fell','fallen'],hang:['hung'],catch:['caught'],buy:['bought'],sit:['sat'],lose:['lost'],meet:['met'],pay:['paid'],hear:['heard'],build:['built'],send:['sent'],spend:['spent'],understand:['understood'],wear:['wore','worn'],break:['broke','broken'],choose:['chose','chosen'],drive:['drove','driven'],eat:['ate','eaten'],fly:['flew','flown'],forget:['forgot','forgotten'],rise:['rose','risen'],show:['shown'],sing:['sang','sung'],throw:['threw','thrown'],wake:['woke','woken'],win:['won'],lie:['lay','lain','lying'],die:['dying'],sleep:['slept'],lead:['led'],fight:['fought'],teach:['taught'],seek:['sought'],hide:['hid','hidden'],shake:['shook','shaken'],steal:['stole','stolen'],drink:['drank','drunk'],ring:['rang','rung'],draw:['drew','drawn'],shoot:['shot'],feed:['fed'],light:['lit'],weep:['wept'],creep:['crept'],swear:['swore','sworn']};
+const reEsc=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+function wordRe(w){
+  const lw=w.toLowerCase();
+  if(lw.length<=2||!/^[a-z]+$/.test(lw))return '\\b'+reEsc(w)+'\\b';
+  let base;
+  if(/[^aeiou]y$/.test(lw))base=reEsc(lw.slice(0,-1))+'(?:y|i)[a-z]*';
+  else if(/e$/.test(lw)&&lw.length>3)base=reEsc(lw.slice(0,-1))+'[a-z]*';
+  else base=reEsc(lw)+'[a-z]*';
+  const alts=[base].concat((IRR[lw]||[]).map(reEsc));
+  return '\\b(?:'+alts.join('|')+')\\b';
+}
+function phraseParts(ph){
+  return String(ph).replace(/[（(][^）)]*[）)]/g,' ')
+    .split(/\s*(?:～|〜|~|…|\.\.\.|\bA\b|\bB\b)\s*/)
+    .map(s=>s.trim()).filter(s=>/[A-Za-z]/.test(s));
+}
+function partRe(part){
+  return part.split(/\s+/).map(t=>{const w=t.replace(/[^A-Za-z'’\-]/g,'');return w?wordRe(w):null}).filter(Boolean).join('\\s+');
+}
+function findPhrase(text,ph){
+  const parts=phraseParts(ph).map(partRe).filter(Boolean);
+  if(!parts.length)return null;
+  const re0=new RegExp(parts[0],'gi');let m0;
+  while((m0=re0.exec(text))){
+    if(!m0[0].length){re0.lastIndex++;continue}
+    const ranges=[[m0.index,m0.index+m0[0].length]];let pos=ranges[0][1],ok=true;
+    for(let k=1;k<parts.length;k++){
+      const re=new RegExp(parts[k],'gi');re.lastIndex=pos;const m=re.exec(text);
+      if(!m||m.index-pos>90){ok=false;break}
+      ranges.push([m.index,m.index+m[0].length]);pos=m.index+m[0].length;
+    }
+    if(ok)return ranges;
+  }
+  return null;
+}
+function markup(text,marks){
+  const n=text.length,cover=Array.from({length:n},()=>[]),after={};
+  marks.forEach(mk=>{
+    if(!mk.ranges)return;
+    mk.ranges.forEach(([a,b])=>{for(let x=a;x<b;x++)cover[x].push(mk)});
+    if(mk.note){const end=mk.ranges[mk.ranges.length-1][1];(after[end]=after[end]||[]).push(mk.note)}
+  });
+  const seen=new Set();
+  Object.keys(after).map(Number).sort((a,b)=>a-b).forEach(k=>{after[k]=after[k].filter(x=>{if(seen.has(x))return false;seen.add(x);return true})});
+  const key=c=>c.map(m=>m.key).join(' ');
+  let out='',i=0;
+  while(i<n){
+    let j=i+1;const ki=key(cover[i]);
+    while(j<n&&key(cover[j])===ki&&!(after[j]&&after[j].length))j++;
+    const seg=esc(text.slice(i,j)),c=cover[i];
+    if(c.length){
+      const cls=[c.some(m=>m.type==='g')?'mu':'',c.some(m=>m.type==='m')?'mg':''].filter(Boolean).join(' ');
+      out+='<span class="'+cls+'" data-keys="'+ki+'">'+seg+'</span>';
+    }else out+=seg;
+    if(after[j])out+=after[j].map(nt=>'<sup class="nsup" data-note="'+esc(nt)+'">'+esc(nt)+'</sup>').join('');
+    i=j;
+  }
+  return out;
+}
+/*PARSER-END*/
+
+/* ---------- 保存（IndexedDB） ---------- */
+let db;
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open('tadoku',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>{db=r.result;res()};r.onerror=()=>rej(r.error)})}
+function kvGet(k){return new Promise((res,rej)=>{const q=db.transaction('kv','readonly').objectStore('kv').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}
+function kvSet(k,v){return new Promise((res,rej)=>{const q=db.transaction('kv','readwrite').objectStore('kv').put(v,k);q.onsuccess=()=>res();q.onerror=()=>rej(q.error)})}
+
+const DEFAULTS={goalTotal:100000,goalMonthly:{},voiceURI:'',rate:0.9,fontSize:19,showJa:true};
+const S={materials:{},records:[],progress:{},settings:{...DEFAULTS}};
+const cache={};
+const saveMaterials=()=>kvSet('materials',S.materials);
+const saveRecords=()=>kvSet('records',S.records);
+const saveProgress=()=>kvSet('progress',S.progress);
+const saveSettings=()=>kvSet('settings',S.settings);
+function parsed(id){if(!cache[id]){const m=S.materials[id];cache[id]=parseMaterial(m.raw,m.fileName)}return cache[id]}
+function prog(id){return S.progress[id]||(S.progress[id]={seconds:0,scroll:0})}
+function lastRead(id){let r=null;S.records.forEach(x=>{if(x.materialId===id&&(!r||x.date>=r.date))r=x});return r}
+
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('on'),2600)}
+function flash(el){if(!el)return;el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),1700)}
+
+/* ---------- 画面切り替え ---------- */
+let view='shelf';
+function showView(v){
+  view=v;
+  ['shelf','log','settings'].forEach(x=>$('#v-'+x).hidden=(x!==v));
+  $('#v-reader').hidden=(v!=='reader');
+  $('#tabs').hidden=(v==='reader');
+  document.body.classList.toggle('reading',v==='reader');
+  $$('#tabs button').forEach(b=>{if(b.dataset.view===v)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
+  if(v==='shelf')renderShelf();
+  if(v==='log')renderLog();
+  if(v==='settings')renderSettings();
+  if(v!=='reader')window.scrollTo(0,0);
+}
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-view]');if(b)showView(b.dataset.view)});
+
+/* ---------- 本棚 ---------- */
+function renderShelf(){
+  const list=$('#shelf-list'),ids=Object.keys(S.materials);
+  $('#btn-manage').hidden=!ids.length;
+  if(!ids.length){
+    list.innerHTML='<div class="empty"><p class="empty-t">教材を読み込むと、ここに並びます</p><p class="empty-s">「ファイル」アプリの iCloud Drive → Obsidian → 03_Personal → 04_英語多読アプリ → 教材 から、教材ファイル（.md）を選んでください。まとめて選ぶこともできます。</p><button class="btn primary" data-act="import" type="button">教材を読み込む</button></div>';
+    return;
+  }
+  const books={};
+  ids.forEach(id=>{const m=parsed(id);(books[m.book]=books[m.book]||[]).push(m)});
+  list.innerHTML=Object.keys(books).sort((a,b)=>a.localeCompare(b,'ja')).map(b=>{
+    const items=books[b].sort((x,y)=>x.number.localeCompare(y.number,'ja',{numeric:true}));
+    const done=items.filter(m=>lastRead(m.id)).length;
+    const words=items.reduce((a,m)=>a+m.words,0);
+    return '<section class="book"><div class="book-h"><h2>'+esc(b)+'</h2><span class="book-m">'+done+' / '+items.length+' 回 読了　'+fmtNum(words)+'語</span></div><ul class="parts">'+
+      items.map(m=>{
+        const lr=lastRead(m.id),p=S.progress[m.id];
+        const st=lr?'<span class="st done">読了 '+esc(lr.date.slice(5).replace('-','/'))+'</span>':(p&&p.seconds>=30?'<span class="st mid">途中 '+fmtMin(p.seconds)+'</span>':'<span class="st">未読</span>');
+        return '<li><button class="part" type="button" data-open="'+esc(m.id)+'"><span class="pn">'+esc(m.number||'—')+'</span><span class="pc">'+esc(m.chapter)+'</span><span class="pw">'+fmtNum(m.words)+'語</span>'+st+'</button><button class="del" type="button" data-del="'+esc(m.id)+'">削除</button></li>';
+      }).join('')+'</ul></section>';
+  }).join('');
+}
+$('#btn-manage').addEventListener('click',()=>{const on=$('#shelf-list').classList.toggle('managing');$('#btn-manage').textContent=on?'完了':'整理'});
+document.addEventListener('click',e=>{if(e.target.closest('[data-act="import"]'))$('#f-material').click()});
+$('#shelf-list').addEventListener('click',async e=>{
+  const o=e.target.closest('[data-open]');if(o){openReader(o.dataset.open);return}
+  const d=e.target.closest('[data-del]');
+  if(d){
+    const m=parsed(d.dataset.del);
+    if(!confirm('「'+m.book+' '+m.number+'」を本棚から削除しますか？\n読書記録は残ります。'))return;
+    delete S.materials[m.id];delete cache[m.id];delete S.progress[m.id];
+    await saveMaterials();await saveProgress();renderShelf();toast('削除しました');
+  }
+});
+$('#f-material').addEventListener('change',async e=>{
+  const files=[...e.target.files];e.target.value='';
+  let ok=0;const ng=[];
+  for(const f of files){
+    let m=null,raw='';
+    try{raw=await f.text();m=parseMaterial(raw,f.name)}catch(err){m=null}
+    if(!m||!m.sentenceCount){ng.push(f.name);continue}
+    S.materials[m.id]={raw,fileName:f.name,importedAt:Date.now()};cache[m.id]=m;ok++;
+  }
+  if(ok)await saveMaterials();
+  renderShelf();
+  if(ng.length)toast((ok?ok+'件を読み込みました。':'')+'読み込めなかったファイル：'+ng.join('、')+'（教材ファイルの形か確認してください）');
+  else if(ok)toast(ok+'件を読み込みました');
+});
+
+/* ---------- 読み上げ ---------- */
+let voices=[],playToken=0,playing=false;
+function loadVoices(){if(!('speechSynthesis' in window))return;voices=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang));if(view==='settings')renderSettings()}
+if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices}
+function pickVoice(){
+  const s=S.settings.voiceURI;
+  return voices.find(v=>v.voiceURI===s)||voices.find(v=>v.lang==='en-US'&&/enhanced|premium|拡張|プレミアム/i.test(v.name))||voices.find(v=>v.lang==='en-US'&&/Samantha|Ava|Allison|Susan|Tom|Evan|Nathan/i.test(v.name))||voices.find(v=>v.lang==='en-US')||voices[0]||null;
+}
+const cleanTTS=t=>String(t).replace(/[“”]/g,'"').replace(/[‘’]/g,"'").replace(/[～〜~…]/g,' ').replace(/[（(][^）)]*[）)]/g,' ');
+function sayText(text,onEnd){
+  if(!('speechSynthesis' in window)){toast('この端末では読み上げが使えません');return false}
+  const u=new SpeechSynthesisUtterance(cleanTTS(text));
+  const v=pickVoice();if(v){u.voice=v;u.lang=v.lang}else u.lang='en-US';
+  u.rate=S.settings.rate;
+  u.onend=()=>{lastActive=Date.now();onEnd&&onEnd()};
+  u.onerror=()=>{onEnd&&onEnd()};
+  lastActive=Date.now();
+  speechSynthesis.speak(u);return true;
+}
+function clearSpeaking(){$$('.row.speaking').forEach(r=>r.classList.remove('speaking'))}
+function stopSpeech(){playToken++;playing=false;if('speechSynthesis' in window)speechSynthesis.cancel();clearSpeaking();updPlayBtn()}
+function speakOnce(text,row){
+  stopSpeech();const t=playToken;
+  setTimeout(()=>{if(t!==playToken)return;if(row)row.classList.add('speaking');sayText(text,()=>{if(t===playToken&&row)row.classList.remove('speaking')})},80);
+}
+function allSentences(){return cur?cur.paragraphs.reduce((a,p)=>a.concat(p.sentences),[]):[]}
+function firstVisibleRow(){
+  const top=$('.rbar').getBoundingClientRect().bottom;
+  const rows=$$('#r-rows .row');const i=rows.findIndex(r=>r.getBoundingClientRect().bottom>top+20);
+  return i<0?0:i;
+}
+function playAll(){
+  const from=firstVisibleRow();
+  stopSpeech();playing=true;updPlayBtn();const t=playToken;
+  const rows=$$('#r-rows .row'),sents=allSentences();
+  const step=i=>{
+    if(t!==playToken)return;
+    clearSpeaking();
+    if(i>=sents.length){playing=false;updPlayBtn();return}
+    const r=rows[i];r.classList.add('speaking');
+    const rc=r.getBoundingClientRect(),top=$('.rbar').getBoundingClientRect().bottom;
+    if(rc.top<top||rc.bottom>window.innerHeight)window.scrollBy({top:rc.top-top-40,behavior:'smooth'});
+    sayText(sents[i].en,()=>{if(t===playToken)setTimeout(()=>step(i+1),250)});
+  };
+  setTimeout(()=>step(from),80);
+}
+function updPlayBtn(){const b=$('#btn-playall');if(b)b.innerHTML=playing?ICON.stop+'止める':ICON.play+'続けて聞く'}
+
+/* ---------- リーダー ---------- */
+let cur=null,curId=null,timerStart=null,lastActive=Date.now();
+const IDLE=10*60*1000;
+function noteBtn(n){return n?'<button class="nref" type="button" data-note="'+esc(n)+'">'+esc(n)+'</button>':''}
+const stripPh=ph=>String(ph).replace(/[（(][^）)]*[）)]/g,' ').replace(/[～〜~…]/g,' ').replace(/\s+/g,' ').trim();
+function rowHTML(s,i){
+  const marks=s.gloss.map((g,k)=>({...g,type:'g',key:'g'+k})).concat(s.gram.map((g,k)=>({...g,type:'m',key:'m'+k})));
+  marks.forEach(mk=>{mk.ranges=findPhrase(s.en,mk.phrase)});
+  const ja=esc(s.ja).replace(/\n/g,'<br>');
+  const jaBlock=ja?'<p class="ja-t">'+ja+'</p><button class="jabtn" type="button">和訳を見る</button>':'';
+  const gram=s.gram.map((g,k)=>'<div class="gn" data-key="m'+k+'"><span class="gnp">'+esc(g.phrase)+'</span><span>'+esc(g.text)+'</span>'+noteBtn(g.note)+'</div>').join('');
+  const gloss=s.gloss.map((g,k)=>'<div class="gi" data-key="g'+k+'"><button class="gp" type="button" data-say="'+esc(stripPh(g.phrase))+'">'+esc(g.phrase)+'</button><span>'+esc(g.text)+'</span>'+noteBtn(g.note)+'</div>').join('');
+  return '<div class="row" data-i="'+i+'"><div class="c-en"><button class="say" type="button" data-sent="'+i+'" aria-label="この文を聞く">'+ICON.play+'</button><p class="en">'+markup(s.en,marks)+'</p>'+(gram?'<div class="gns">'+gram+'</div>':'')+'<div class="ja-inline">'+jaBlock+'</div></div><div class="c-gl">'+gloss+'</div><div class="c-ja">'+jaBlock+'</div></div>';
+}
+function renderReader(){
+  const m=cur;
+  $('#r-title').textContent=m.book+(m.number?' '+m.number:'');
+  $('#r-chapter').textContent=m.chapter+'　'+fmtNum(m.words)+'語';
+  let i=0;
+  $('#r-rows').innerHTML=m.paragraphs.map(p=>'<div class="para">'+p.sentences.map(s=>rowHTML(s,i++)).join('')+'</div>').join('');
+  $('#r-notes').innerHTML=m.notes.length?'<h2 class="sec-t">解説ノート</h2>'+m.notes.map((n,k)=>
+    '<article class="note" id="note-'+k+'"><h3>'+(n.mark?'<span class="nm">'+esc(n.mark)+'</span>':'')+'<span>'+esc(n.title)+'</span></h3>'+
+    n.desc.map(d=>'<p>'+esc(d)+'</p>').join('')+
+    (n.examples.length?'<ul class="ex">'+n.examples.map(x=>'<li><button class="say" type="button" data-text="'+esc(x.en)+'" aria-label="例文を聞く">'+ICON.play+'</button><div><p class="ex-en">'+esc(x.en)+'</p>'+(x.ja?'<p class="ex-ja">'+esc(x.ja)+'</p>':'')+'</div></li>').join('')+'</ul>':'')+
+    '</article>').join(''):'';
+  $('#r-keep').innerHTML=m.keep.length?'<h2 class="sec-t">覚えたい表現</h2><ul class="keep">'+m.keep.map(k=>'<li><button class="say" type="button" data-text="'+esc(stripPh(k.en))+'" aria-label="表現を聞く">'+ICON.play+'</button><span class="k-en">'+esc(k.en)+'</span><span class="k-ja">'+esc(k.ja)+'</span></li>').join('')+'</ul>':'';
+  applyReaderPrefs();updPlayBtn();updTimerNote();
+}
+function applyReaderPrefs(){
+  const r=$('#v-reader');
+  r.style.setProperty('--en-size',S.settings.fontSize+'px');
+  r.classList.toggle('hide-ja',!S.settings.showJa);
+  $('#btn-ja').textContent=S.settings.showJa?'和訳を隠す':'和訳を表示';
+  $('#btn-ja').setAttribute('aria-pressed',String(!S.settings.showJa));
+}
+function openReader(id){
+  cur=parsed(id);curId=id;
+  showView('reader');renderReader();
+  const p=prog(id);
+  requestAnimationFrame(()=>window.scrollTo(0,p.scroll||0));
+  lastActive=Date.now();timerStart=document.visibilityState==='visible'?Date.now():null;
+}
+function flushTimer(){
+  if(!curId||timerStart==null)return;
+  const now=Date.now(),until=Math.min(now,lastActive+IDLE);
+  const add=Math.max(0,Math.round((until-timerStart)/1000));
+  timerStart=now;
+  const p=prog(curId);p.seconds+=add;p.scroll=window.scrollY;
+  saveProgress();updTimerNote();
+}
+function updTimerNote(){if(curId)$('#r-timer').textContent='今回の読書時間　約'+fmtMin(prog(curId).seconds)}
+function closeReader(){
+  flushTimer();stopSpeech();timerStart=null;cur=null;curId=null;showView('shelf');
+}
+setInterval(flushTimer,15000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){flushTimer();timerStart=null;stopSpeech()}else if(curId){lastActive=Date.now();timerStart=Date.now()}});
+window.addEventListener('pagehide',flushTimer);
+['touchstart','scroll','keydown','click'].forEach(ev=>window.addEventListener(ev,()=>{
+  const now=Date.now();
+  if(curId&&timerStart!=null&&now-lastActive>IDLE){flushTimer();timerStart=now}
+  lastActive=now;
+},{passive:true}));
+
+$('#btn-back').innerHTML=ICON.back+'本棚';
+$('#btn-back').addEventListener('click',closeReader);
+$('#btn-playall').addEventListener('click',()=>{if(playing)stopSpeech();else playAll()});
+$('#btn-ja').addEventListener('click',()=>{S.settings.showJa=!S.settings.showJa;$$('.row.reveal').forEach(r=>r.classList.remove('reveal'));applyReaderPrefs();saveSettings()});
+$('#btn-fs-down').addEventListener('click',()=>{S.settings.fontSize=Math.max(15,S.settings.fontSize-1);applyReaderPrefs();saveSettings()});
+$('#btn-fs-up').addEventListener('click',()=>{S.settings.fontSize=Math.min(28,S.settings.fontSize+1);applyReaderPrefs();saveSettings()});
+const RATES=[0.6,0.7,0.8,0.9,1.0,1.1];
+$('#sel-rate').innerHTML=RATES.map(r=>'<option value="'+r+'">'+r.toFixed(1)+'倍</option>').join('');
+$('#sel-rate').addEventListener('change',e=>{S.settings.rate=+e.target.value;saveSettings()});
+
+$('#v-reader').addEventListener('click',e=>{
+  const row=e.target.closest('.row');
+  let b;
+  if((b=e.target.closest('[data-sent]'))){const s=allSentences()[+b.dataset.sent];if(s)speakOnce(s.en,row);return}
+  if((b=e.target.closest('[data-text]'))){speakOnce(b.dataset.text,null);return}
+  if((b=e.target.closest('[data-note]'))){
+    const k=cur.notes.findIndex(n=>n.mark===b.dataset.note);
+    const el=k>=0?$('#note-'+k):null;
+    if(el){const top=$('.rbar').getBoundingClientRect().bottom;window.scrollBy({top:el.getBoundingClientRect().top-top-12,behavior:'smooth'});setTimeout(()=>flash(el),350)}
+    return;
+  }
+  if((b=e.target.closest('[data-say]'))){
+    speakOnce(b.dataset.say,null);
+    const key=b.closest('[data-key]').dataset.key;
+    row.querySelectorAll('span[data-keys]').forEach(sp=>{if(sp.dataset.keys.split(' ').includes(key))flash(sp)});
+    return;
+  }
+  if((b=e.target.closest('span[data-keys]'))){
+    b.dataset.keys.split(' ').forEach(k=>{row.querySelectorAll('[data-key="'+k+'"]').forEach(flash)});
+    flash(b);return;
+  }
+  if(e.target.closest('.jabtn')){row.classList.add('reveal');return}
+  if(e.target.closest('.ja-t')&&!S.settings.showJa){row.classList.remove('reveal');return}
+});
+
+/* ---------- 読了・記録の編集 ---------- */
+let recMode=null,recEditId=null;
+function openRecDialog(mode,rec){
+  recMode=mode;recEditId=rec?rec.id:null;
+  $('#rec-err').hidden=true;
+  if(mode==='new'){
+    flushTimer();
+    const p=prog(curId);
+    $('#rec-h').textContent='読了の記録';
+    $('#rec-sub').textContent=cur.book+' '+cur.number+'　'+fmtNum(cur.words)+'語';
+    $('#rec-date').value=today();
+    $('#rec-min').value=Math.max(1,Math.round(p.seconds/60));
+    $('#rec-min-note').textContent='自動で計った時間：約'+fmtMin(p.seconds)+'（必要なら直してください）';
+    $('#rec-cmt').value='';
+    $('#rec-del').hidden=true;$('#rec-save').textContent='記録する';
+  }else{
+    $('#rec-h').textContent='記録を編集';
+    $('#rec-sub').textContent=rec.book+' '+rec.number+'　'+fmtNum(rec.words)+'語';
+    $('#rec-date').value=rec.date;
+    $('#rec-min').value=Math.max(1,Math.round(rec.seconds/60));
+    $('#rec-min-note').textContent='';
+    $('#rec-cmt').value=rec.comment||'';
+    $('#rec-del').hidden=false;$('#rec-save').textContent='保存する';
+  }
+  $('#dlg-rec').showModal();
+}
+$('#btn-finish').addEventListener('click',()=>{stopSpeech();openRecDialog('new')});
+$('#rec-cancel').addEventListener('click',()=>$('#dlg-rec').close());
+['#rec-date','#rec-min'].forEach(s=>$(s).addEventListener('input',()=>$('#rec-err').hidden=true));
+$('#rec-save').addEventListener('click',async()=>{
+  const date=$('#rec-date').value,min=Math.round(+$('#rec-min').value);
+  const err=!date?'読了日を入れてください':(!min||min<1)?'読んだ時間を1分以上で入れてください':'';
+  if(err){$('#rec-err').textContent=err;$('#rec-err').hidden=false;return}
+  const comment=$('#rec-cmt').value.trim();
+  if(recMode==='new'){
+    S.records.push({id:uid(),materialId:curId,book:cur.book,number:cur.number,chapter:cur.chapter,words:cur.words,seconds:min*60,date,comment});
+    S.progress[curId]={seconds:0,scroll:0};
+    await saveRecords();await saveProgress();
+    $('#dlg-rec').close();
+    const w=cur.words;timerStart=null;cur=null;curId=null;
+    showView('log');toast('記録しました（'+fmtNum(w)+'語）');
+  }else{
+    const r=S.records.find(x=>x.id===recEditId);
+    if(r){r.date=date;r.seconds=min*60;r.comment=comment;await saveRecords()}
+    $('#dlg-rec').close();renderLog();toast('保存しました');
+  }
+});
+$('#rec-del').addEventListener('click',async()=>{
+  if(!confirm('この記録を削除しますか？'))return;
+  S.records=S.records.filter(x=>x.id!==recEditId);await saveRecords();
+  $('#dlg-rec').close();renderLog();toast('記録を削除しました');
+});
+
+/* ---------- 記録・目標 ---------- */
+function monthlyGoal(mk){
+  const g=S.settings.goalMonthly||{};
+  if(g[mk]!=null)return g[mk];
+  const ks=Object.keys(g).filter(k=>k<mk).sort();
+  return ks.length?g[ks[ks.length-1]]:0;
+}
+function goalCard(label,v,g){
+  const pct=g?Math.min(100,v/g*100):0,rest=g?Math.max(0,g-v):0;
+  return '<div class="goal"><div class="goal-h"><span class="goal-l">'+label+'</span><span class="goal-v">'+fmtNum(v)+'<small> / '+(g?fmtNum(g)+'語':'目標なし')+'</small></span></div><div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+Math.round(pct)+'"><i style="width:'+pct.toFixed(1)+'%"></i></div><p class="goal-s">'+(g?(rest?'あと '+fmtNum(rest)+'語':'目標を達成しました'):'「目標を変更」から設定できます')+'</p></div>';
+}
+function renderLog(){
+  const recs=[...S.records].sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id));
+  const mk=today().slice(0,7);
+  const total=recs.reduce((a,r)=>a+r.words,0);
+  const monthWords=recs.filter(r=>r.date.startsWith(mk)).reduce((a,r)=>a+r.words,0);
+  const secs=recs.reduce((a,r)=>a+r.seconds,0);
+  const wpm=secs?total/(secs/60):0;
+  const months={};months[mk]={w:0,s:0,n:0};
+  recs.forEach(r=>{const k=r.date.slice(0,7);const o=months[k]=months[k]||{w:0,s:0,n:0};o.w+=r.words;o.s+=r.seconds;o.n++});
+  const mkeys=Object.keys(months).sort().reverse();
+  let h='<div class="goals">'+goalCard('累計',total,S.settings.goalTotal)+goalCard(+mk.slice(5)+'月',monthWords,monthlyGoal(mk))+'</div>';
+  h+='<div class="stats"><div class="stat"><b>'+recs.length+'回</b><span>読了</span></div><div class="stat"><b>'+fmtMin(secs)+'</b><span>読んだ時間の合計</span></div><div class="stat"><b>'+(wpm?Math.round(wpm)+'語':'—')+'</b><span>1分あたりの平均</span></div></div>';
+  h+='<h2 class="h2">月ごとの記録</h2><table class="months"><thead><tr><th>月</th><th>語数</th><th>目標</th><th>時間</th><th></th></tr></thead><tbody>'+
+    mkeys.map(k=>{const o=months[k],g=monthlyGoal(k);return '<tr><td>'+k.slice(0,4)+'年'+(+k.slice(5))+'月</td><td>'+fmtNum(o.w)+'語</td><td>'+(g?fmtNum(g)+'語':'—')+'</td><td>'+fmtMin(o.s)+'</td><td>'+(g&&o.w>=g?'<span class="ok">達成</span>':'')+'</td></tr>'}).join('')+'</tbody></table>';
+  h+='<h2 class="h2">読んだもの</h2>';
+  h+=recs.length?'<ul class="recs">'+recs.map(r=>{
+    const w=r.seconds?Math.round(r.words/(r.seconds/60)):0;
+    return '<li><span class="r-date">'+esc(r.date.slice(5).replace('-','/'))+'</span><div class="r-main"><b>'+esc(r.book)+' '+esc(r.number)+'</b> <span class="muted">'+esc(r.chapter)+'</span><div class="r-meta">'+fmtNum(r.words)+'語　'+fmtMin(r.seconds)+(w?'　1分あたり'+w+'語':'')+'</div>'+(r.comment?'<p class="r-cmt">'+esc(r.comment)+'</p>':'')+'</div><button class="btn" type="button" data-edit="'+esc(r.id)+'">編集</button></li>';
+  }).join('')+'</ul>':'<p class="muted" style="padding:16px 2px">教材を読み終えて「読了」を押すと、ここに記録が並びます。</p>';
+  $('#log-body').innerHTML=h;
+}
+$('#log-body').addEventListener('click',e=>{const b=e.target.closest('[data-edit]');if(b){const r=S.records.find(x=>x.id===b.dataset.edit);if(r)openRecDialog('edit',r)}});
+$('#btn-goal').addEventListener('click',()=>{
+  const mk=today().slice(0,7);
+  $('#goal-total').value=S.settings.goalTotal||0;
+  $('#goal-month').value=monthlyGoal(mk)||0;
+  $('#goal-month-l').textContent=(+mk.slice(5))+'月の目標（語）';
+  $('#goal-err').hidden=true;
+  $('#dlg-goal').showModal();
+});
+$('#goal-cancel').addEventListener('click',()=>$('#dlg-goal').close());
+$('#goal-save').addEventListener('click',async()=>{
+  const t=+$('#goal-total').value,m=+$('#goal-month').value;
+  if(!(t>=0)||!(m>=0)||$('#goal-total').value===''||$('#goal-month').value===''){$('#goal-err').textContent='0以上の数字を入れてください';$('#goal-err').hidden=false;return}
+  S.settings.goalTotal=Math.round(t);
+  S.settings.goalMonthly=S.settings.goalMonthly||{};
+  S.settings.goalMonthly[today().slice(0,7)]=Math.round(m);
+  await saveSettings();$('#dlg-goal').close();renderLog();toast('目標を保存しました');
+});
+
+/* ---------- 設定 ---------- */
+function renderSettings(){
+  const sel=$('#set-voice');
+  if(!voices.length){sel.innerHTML='<option value="">英語の声が見つかりません</option>';return}
+  const v=pickVoice();
+  sel.innerHTML=voices.map(x=>'<option value="'+esc(x.voiceURI)+'"'+(v&&x.voiceURI===v.voiceURI?' selected':'')+'>'+esc(x.name)+'（'+esc(x.lang)+'）</option>').join('');
+}
+$('#set-voice').addEventListener('change',e=>{S.settings.voiceURI=e.target.value;saveSettings()});
+$('#btn-voice-test').addEventListener('click',()=>speakOnce('The ghost always disappeared as soon as he was seen.',null));
+$('#btn-export').addEventListener('click',async()=>{
+  const data={app:'tadoku',version:1,exportedAt:new Date().toISOString(),materials:S.materials,records:S.records,progress:S.progress,settings:S.settings};
+  const name='多読バックアップ_'+today()+'.json';
+  const blob=new Blob([JSON.stringify(data)],{type:'application/json'});
+  const file=new File([blob],name,{type:'application/json'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file]});return}catch(err){if(err.name==='AbortError')return}
+  }
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+});
+$('#btn-restore').addEventListener('click',()=>$('#f-backup').click());
+$('#f-backup').addEventListener('change',async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  let d;try{d=JSON.parse(await f.text())}catch(err){d=null}
+  if(!d||d.app!=='tadoku'){toast('このアプリの控えファイルではありません');return}
+  if(!confirm('今のデータを、控えの内容（'+String(d.exportedAt||'').slice(0,10)+' 時点）ですべて置き換えます。よろしいですか？'))return;
+  S.materials=d.materials||{};S.records=d.records||[];S.progress=d.progress||{};S.settings={...DEFAULTS,...(d.settings||{})};
+  Object.keys(cache).forEach(k=>delete cache[k]);
+  await saveMaterials();await saveRecords();await saveProgress();await saveSettings();
+  $('#sel-rate').value=String(S.settings.rate);
+  toast('控えから戻しました');showView('shelf');
+});
+
+/* ---------- 起動 ---------- */
+(async()=>{
+  try{
+    await openDB();
+    S.materials=(await kvGet('materials'))||{};
+    S.records=(await kvGet('records'))||[];
+    S.progress=(await kvGet('progress'))||{};
+    S.settings={...DEFAULTS,...((await kvGet('settings'))||{})};
+  }catch(err){toast('データを開けませんでした。Safariのプライベートブラウズでは保存できません。')}
+  $('#sel-rate').value=String(S.settings.rate);
+  updPlayBtn();
+  showView('shelf');
+  if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
+  if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+})();
+</script>
+</body>
+</html>
